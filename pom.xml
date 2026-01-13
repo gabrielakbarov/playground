@@ -10,6 +10,7 @@
 
     <properties>
         <maven.compiler.release>22</maven.compiler.release>
+        <sonar.organization>gabrielakbarov</sonar.organization>
     </properties>
 
     <build>
