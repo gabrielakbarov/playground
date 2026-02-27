@@ -10,7 +10,7 @@ public class Admin {
 
     public void printInfo(){
         value *= 2;
-        logger.info("The project is running." + value);
+        logger.info("The project is running. " + value);
     }
 
     public int getValue(){
