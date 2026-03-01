@@ -1,19 +1,19 @@
 import java.util.logging.Logger;
 
 public class Admin {
-    Logger logger = Logger.getLogger(getClass().getName());
-    int value = 10;
+    private static final Logger logger = Logger.getLogger(Admin.class.getName());
+    private int value = 10;
 
-    public Admin(){
-
+    public Admin() {
+        // Default constructor intentionally left empty.
     }
 
-    public void printInfo(){
+    public void printInfo() {
         value *= 2;
-        logger.info("The project is running. " + value);
+        logger.info(String.format("The project is running. %d", value));
     }
 
-    public int getValue(){
+    public int getValue() {
         return value;
     }
 }
