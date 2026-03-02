@@ -2,7 +2,7 @@ package Sonar;
 
 public class Issue {
     public enum Status {
-        OPEN, CONFIRMED, FALSE_POSITIVE, ACCEPTED, FIXED, RESOLVED, REOPENED
+        OPEN, CONFIRMED, FALSE_POSITIVE, ACCEPTED, FIXED, RESOLVED, REOPENED, CLOSED
     }
 
     public String key;

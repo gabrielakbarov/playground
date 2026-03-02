@@ -84,6 +84,7 @@ public class FileReader {
 
     public String getFile(String filePath){
         Path fullPath = resolvePath(filePath);
+        log.debug("Resolved path: {}", fullPath.toAbsolutePath());
 
         String file = "";
 

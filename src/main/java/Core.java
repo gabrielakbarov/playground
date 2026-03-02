@@ -1,0 +1,108 @@
+import AI.AiService;
+import AI.FileReader;
+import Git.GitService;
+import Sonar.Issue;
+import Sonar.IssueDetailFetcher;
+import Sonar.IssuesFetcher;
+
+import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class Core {
+
+    private static Logger log = LoggerFactory.getLogger(Core.class);
+
+    public static void main(String[] args) {
+        IssuesFetcher fetcher = new IssuesFetcher();
+        IssueDetailFetcher detailFetcher = new IssueDetailFetcher();
+
+        List<Issue> issues = fetcher.fetchIssuesByProject();
+
+        List<Issue> openIssues = new ArrayList<>(
+                filterByStatus(issues, Issue.Status.OPEN)
+        );
+
+        Path clonedRepo = Path.of("repo");
+
+        FileReader logger = new FileReader(clonedRepo);
+
+        for (int i=0; i<openIssues.size(); i++) {
+
+            String snippet = "", file = "";
+
+            try {
+                Issue detailedIssue = detailFetcher.fetchIssueDetails(openIssues.get(i).getKey());
+
+                // Immer versuchen, die Datei zu setzen
+                try {
+                    file = logger.getFile(detailedIssue.filePath);
+                } catch (Exception e) {
+                    log.error("Failed to get file for {}: {}", detailedIssue.filePath, e.getMessage(), e);
+                }
+
+                // Snippet nur extrahieren, wenn textRange korrekt ist
+                if (detailedIssue.textRange != null && detailedIssue.textRange.length == 4) {
+                    try {
+                        snippet = logger.extract(
+                                detailedIssue.filePath,
+                                detailedIssue.textRange[0],
+                                detailedIssue.textRange[1],
+                                detailedIssue.textRange[2],
+                                detailedIssue.textRange[3]
+                        );
+                    } catch (Exception e) {
+                        log.error("Failed to extract snippet for {}: {}", detailedIssue.filePath, e.getMessage(), e);
+                    }
+                } else {
+                    log.info("No valid textRange for {}, skipping snippet extraction", detailedIssue.filePath);
+                }
+
+                detailedIssue.setSnippet(snippet);
+                detailedIssue.setFile(file);
+
+                log.info("Snippet and file set: {} {}", snippet, file);
+
+                openIssues.set(i, detailedIssue);
+            } catch (Exception e) {
+                log.error("Error2: {}", e.getMessage());
+            }
+        }
+
+
+        AiService aiService = new AiService();
+        Map<String, String> correctedFiles = aiService.chatService(new ArrayList<>(openIssues));
+
+        log.info(correctedFiles.toString());
+
+        GitService gitService;
+
+        try {
+            gitService = new GitService();
+        } catch (Exception e) {
+            log.error("Error initializing repository.");
+            throw new RuntimeException(e);
+        }
+
+        try {
+            gitService.commitAndPush(correctedFiles, "Commit aus Workflow " + OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        } catch (Exception e) {
+            log.error("Error pushing changes.");
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    public static List<Issue> filterByStatus(List<Issue> issues, Issue.Status status) {
+        return issues.stream()
+                .filter(issue -> issue.getStatus() == status)
+                .toList();
+    }
+}
