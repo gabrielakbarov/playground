@@ -74,11 +74,6 @@ public class FileReader {
             }
         }
 
-//        log.info("Extracted snippet from {} ({}:{} → {}:{})",
-//                fullPath, startLine, startOffset, endLine, endOffset);
-
-//        log.debug("Snippet:\n{}", snippet);
-
         return snippet.toString();
     }
 

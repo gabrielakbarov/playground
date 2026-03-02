@@ -41,14 +41,12 @@ public class Core {
             try {
                 Issue detailedIssue = detailFetcher.fetchIssueDetails(openIssues.get(i).getKey());
 
-                // Immer versuchen, die Datei zu setzen
                 try {
                     file = logger.getFile(detailedIssue.filePath);
                 } catch (Exception e) {
                     log.error("Failed to get file for {}: {}", detailedIssue.filePath, e.getMessage(), e);
                 }
 
-                // Snippet nur extrahieren, wenn textRange korrekt ist
                 if (detailedIssue.textRange != null && detailedIssue.textRange.length == 4) {
                     try {
                         snippet = logger.extract(

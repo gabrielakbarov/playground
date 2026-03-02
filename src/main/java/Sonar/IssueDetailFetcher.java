@@ -27,17 +27,14 @@ public class IssueDetailFetcher {
 
         JSONObject issueJson = issuesArray.getJSONObject(0);
 
-        // Basisfelder
         String key = issueJson.optString("key");
         String rule = issueJson.optString("rule");
         String severity = issueJson.optString("severity");
         String message = issueJson.optString("message");
 
-        // Status Mapping
         Issue.Status status;
         status = Issue.Status.valueOf(issueJson.optString("status"));
 
-        // TextRange
         int[] textRange = new int[0];
         if (issueJson.has("textRange")) {
             JSONObject tr = issueJson.getJSONObject("textRange");
@@ -49,7 +46,6 @@ public class IssueDetailFetcher {
             };
         }
 
-        // Component-Zuordnung (über components-Array sauberer)
         String componentKey = issueJson.optString("component");
         String fileId = null;
         String fileName = null;
