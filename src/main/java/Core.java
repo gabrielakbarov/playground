@@ -6,7 +6,6 @@ import Sonar.IssueDetailFetcher;
 import Sonar.IssuesFetcher;
 
 import java.nio.file.Path;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -18,9 +17,11 @@ import org.slf4j.LoggerFactory;
 
 public class Core {
 
-    private static Logger log = LoggerFactory.getLogger(Core.class);
+    private static final Logger log = LoggerFactory.getLogger(Core.class);
 
     public static void main(String[] args) {
+        long start = System.nanoTime();
+
         IssuesFetcher fetcher = new IssuesFetcher();
         IssueDetailFetcher detailFetcher = new IssueDetailFetcher();
 
@@ -29,6 +30,15 @@ public class Core {
         List<Issue> openIssues = new ArrayList<>(
                 filterByStatus(issues, Issue.Status.OPEN)
         );
+
+        GitService gitService;
+
+        try {
+            gitService = new GitService();
+        } catch (Exception e) {
+            log.error("Error initializing repository.");
+            throw new RuntimeException(e);
+        }
 
         Path clonedRepo = Path.of("repo");
 
@@ -76,18 +86,13 @@ public class Core {
 
 
         AiService aiService = new AiService();
+
+        long aiStart = System.nanoTime();
         Map<String, String> correctedFiles = aiService.chatService(new ArrayList<>(openIssues));
+        long aiEnd = System.nanoTime();
 
         log.info(correctedFiles.toString());
 
-        GitService gitService;
-
-        try {
-            gitService = new GitService();
-        } catch (Exception e) {
-            log.error("Error initializing repository.");
-            throw new RuntimeException(e);
-        }
 
         try {
             gitService.commitAndPush(correctedFiles, "Commit aus Workflow " + OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
@@ -95,6 +100,15 @@ public class Core {
             log.error("Error pushing changes.");
             throw new RuntimeException(e);
         }
+
+        long end = System.nanoTime();
+        long duration = end - start;
+        double durationSeconds = duration / 1_000_000_000.0;
+
+        long aiDuration = aiEnd - aiStart;
+        double aiDurationSeconds = aiDuration / 1_000_000_000.0;
+
+        log.info("Gesamtdauer: " + durationSeconds + ", davon Warten auf KI-Antwort: " + aiDurationSeconds);
 
     }
 
